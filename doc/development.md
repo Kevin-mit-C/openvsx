@@ -98,6 +98,46 @@ To get started quickly, it is recommended to use Gitpod as default with the deve
 
 ### Run the application
 
+### Setup locally on MacOS
+
+- Set up postgresql using homebrew
+
+  - brew install postgresql@12
+
+  - Use "postgres –V" to check if it is the correct version
+
+  - brew services start postgresql@12
+
+  - From the terminal, run the command "createdb postgres" (NOT inside psql)
+
+  - "psql –d postgres" to enter the database
+
+  - CREATE ROLE gitpod with LOGIN PASSWORD 'gitpod';
+
+  - Using \d to display all tables and relations, now empty
+
+- Make sure using the correct java version
+
+  -Download java 11 if not yet downloaded yet
+
+  - Run the command "/usr/libexec/java_home –V" to see your matching java virtual machines
+
+  - Pick java 11 accordingly
+
+  - export JAVA_HOME='/usr/libexec/java_home –v 11.0.18'
+
+  - Run "java –version" to check if it's now running java 11
+
+  - https://stackoverflow.com/questions/21964709/how-to-set-or-change-the-default-java-jdk-version-on-macos
+
+- Set up elasticsearch using docker
+
+- Download docker desktop from https://www.docker.com/
+
+- Download the elasticsearch image from docker hub and enable it in the docker desktop
+
+### Run the application
+
 - cd cli
 
   - yarn install
