@@ -9,6 +9,9 @@
  * ****************************************************************************** */
 package org.eclipse.openvsx;
 
+import java.util.concurrent.TimeUnit;
+
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
@@ -23,8 +26,6 @@ import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.DefaultUriBuilderFactory;
-
-import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class RestTemplateConfig {
@@ -71,9 +72,17 @@ public class RestTemplateConfig {
         );
     }
 
+    @Value("${ovsx.upstream.proxy.enabled:false}")
+    private Boolean useProxy;
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder, HttpConnPoolConfig foregroundHttpConnPool) {
-        var httpClient = createHttpClientBuilder(foregroundHttpConnPool).build();
+        HttpClient httpClient;
+        if ( useProxy  ) {
+            httpClient = createHttpClientBuilder(foregroundHttpConnPool).useSystemProperties().build();
+        }
+        else {
+            httpClient = createHttpClientBuilder(foregroundHttpConnPool).build();
+        }
         return builder
                 .requestFactory(() -> {
                     HttpComponentsClientHttpRequestFactory f = new HttpComponentsClientHttpRequestFactory();
@@ -89,7 +98,13 @@ public class RestTemplateConfig {
 
     @Bean
     public RestTemplate nonRedirectingRestTemplate(RestTemplateBuilder builder, HttpConnPoolConfig foregroundHttpConnPool) {
-        var httpClient = createHttpClientBuilder(foregroundHttpConnPool).disableRedirectHandling().build();
+        HttpClient httpClient;
+        if ( useProxy  ) {
+            httpClient = createHttpClientBuilder(foregroundHttpConnPool).disableRedirectHandling().useSystemProperties().build();
+        }
+        else {
+            httpClient = createHttpClientBuilder(foregroundHttpConnPool).disableRedirectHandling().build();
+        }
         return builder
                 .requestFactory(() -> {
                     HttpComponentsClientHttpRequestFactory f = new HttpComponentsClientHttpRequestFactory();
@@ -101,7 +116,13 @@ public class RestTemplateConfig {
 
     @Bean
     public RestTemplate backgroundRestTemplate(RestTemplateBuilder builder, HttpConnPoolConfig backgroundHttpConnPool) {
-        var httpClient = createHttpClientBuilder(backgroundHttpConnPool).build();
+        HttpClient httpClient;
+        if ( useProxy  ) {
+            httpClient = createHttpClientBuilder(backgroundHttpConnPool).useSystemProperties().build();
+        }
+        else {
+            httpClient = createHttpClientBuilder(backgroundHttpConnPool).build();
+        }
         DefaultUriBuilderFactory defaultUriBuilderFactory = new DefaultUriBuilderFactory();
         defaultUriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
         return builder
@@ -120,7 +141,13 @@ public class RestTemplateConfig {
 
     @Bean
     public RestTemplate backgroundNonRedirectingRestTemplate(RestTemplateBuilder builder, HttpConnPoolConfig backgroundHttpConnPool) {
-        var httpClient = createHttpClientBuilder(backgroundHttpConnPool).disableRedirectHandling().build();
+        HttpClient httpClient;
+        if ( useProxy  ) {
+            httpClient = createHttpClientBuilder(backgroundHttpConnPool).disableRedirectHandling().useSystemProperties().build();
+        }
+        else {
+            httpClient = createHttpClientBuilder(backgroundHttpConnPool).disableRedirectHandling().build();
+        }
         DefaultUriBuilderFactory defaultUriBuilderFactory = new DefaultUriBuilderFactory();
         defaultUriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
         return builder
