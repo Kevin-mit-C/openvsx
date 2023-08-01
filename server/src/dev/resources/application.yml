@@ -133,3 +133,7 @@ ovsx:
       timezone: US/Eastern
   integrity:
     key-pair: create # create, renew, delete, 'undefined'
+  upstream:
+    proxy:
+      enabled: true
+    url: https://open-vsx.org/

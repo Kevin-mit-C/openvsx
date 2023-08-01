@@ -9,12 +9,24 @@
  ********************************************************************************/
 package org.eclipse.openvsx;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.openvsx.json.*;
+import org.eclipse.openvsx.json.ExtensionJson;
+import org.eclipse.openvsx.json.NamespaceDetailsJson;
+import org.eclipse.openvsx.json.NamespaceJson;
+import org.eclipse.openvsx.json.QueryRequest;
+import org.eclipse.openvsx.json.QueryRequestV2;
+import org.eclipse.openvsx.json.QueryResultJson;
+import org.eclipse.openvsx.json.ReviewListJson;
+import org.eclipse.openvsx.json.SearchResultJson;
+import org.eclipse.openvsx.json.VersionReferencesJson;
+import org.eclipse.openvsx.json.VersionsJson;
 import org.eclipse.openvsx.search.ISearchService;
 import org.eclipse.openvsx.util.NotFoundException;
 import org.eclipse.openvsx.util.TargetPlatform;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,12 +37,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 public class UpstreamRegistryService implements IExtensionRegistry {
@@ -214,7 +222,7 @@ public class UpstreamRegistryService implements IExtensionRegistry {
     private ResponseEntity<byte[]> getFile(String urlTemplate, Map<String, ?> uriVariables) {
         ResponseEntity<byte[]> response;
         try {
-            response = restTemplate.exchange(urlTemplate, HttpMethod.HEAD, null, byte[].class, uriVariables);
+            response = restTemplate.exchange(urlTemplate, proxy==null?HttpMethod.HEAD:HttpMethod.GET, null, byte[].class, uriVariables);
         } catch(RestClientException exc) {
             if(!isNotFound(exc)) {
                 var url = UriComponentsBuilder.fromUriString(urlTemplate).build(uriVariables);
@@ -225,16 +233,21 @@ public class UpstreamRegistryService implements IExtensionRegistry {
         }
         var statusCode = response.getStatusCode();
         if (statusCode.is2xxSuccessful()) {
-            return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(UriComponentsBuilder.fromHttpUrl(urlTemplate).build(uriVariables))
-                    .build();
+            if ( proxy == null ) {
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .location(UriComponentsBuilder.fromHttpUrl(urlTemplate).build(uriVariables))
+                        .build();
+                    }
+            else {
+                return response;
+            }
         }
         if (statusCode.is3xxRedirection()) {
             return response;
         }
         if (statusCode.isError() && statusCode != HttpStatus.NOT_FOUND) {
             var url = UriComponentsBuilder.fromUriString(urlTemplate).build(uriVariables);
-            logger.error("HEAD {}: {}", url, response);
+            logger.error(proxy==null?"HEAD":"GET"+" {}: {}", url, response);
         }
         throw new NotFoundException();
     }

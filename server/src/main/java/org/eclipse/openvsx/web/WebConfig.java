@@ -16,6 +16,8 @@ import org.eclipse.openvsx.mirror.MirrorExtensionHandlerInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
+import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
@@ -32,6 +34,20 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Value("${ovsx.webui.frontendRoutes:/extension/**,/namespace/**,/user-settings/**,/admin-dashboard/**}")
     String[] frontendRoutes;
+
+    /*
+     * whitelisting "vsix" in MVC namespace
+     * https://docs.spring.io/spring-framework/docs/4.3.15.RELEASE/spring-framework-reference/html/mvc.html#mvc-config-content-negotiation
+     */
+    @Override
+    public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
+        configurer
+            .mediaType("json", MediaType.APPLICATION_JSON)
+            .mediaType("xml", MediaType.APPLICATION_XML)
+            .mediaType("rss", MediaType.APPLICATION_RSS_XML)
+            .mediaType("atom", MediaType.APPLICATION_ATOM_XML)
+            .mediaType("vsix", MediaType.APPLICATION_OCTET_STREAM);
+    }
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
